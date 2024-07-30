@@ -1,0 +1,64 @@
+import requests
+import pandas as pd
+import matplotlib.pyplot as plt
+
+class DeFiPulseLab:
+    def __init__(self):
+        self.api_url = 'https://api.defipulse.com/api/v1'
+
+    def get_defi_protocols(self) -> pd.DataFrame:
+        """Fetches data on DeFi protocols."""
+        url = f"{self.api_url}/resources/defi"
+        response = requests.get(url)
+        data = response.json()
+        return pd.DataFrame(data)
+
+    def get_tvl_data(self) -> pd.DataFrame:
+        """Fetches TVL data for DeFi protocols."""
+        url = f"{self.api_url}/resources/defi/tvl"
+        response = requests.get(url)
+        data = response.json()
+        df = pd.DataFrame(data)
+        df['timestamp'] = pd.to_datetime(df['timestamp'], unit='s')
+        return df
+
+    def plot_tvl_trends(self):
+        """Plots TVL trends for DeFi protocols."""
+        df = self.get_tvl_data()
+        if df.empty:
+            print("No TVL data found.")
+            return
+
+        plt.figure(figsize=(12, 6))
+        for protocol in df['protocol'].unique():
+            protocol_data = df[df['protocol'] == protocol]
+            plt.plot(protocol_data['timestamp'], protocol_data['tvl'], label=protocol)
+
+        plt.title('DeFi Protocol TVL Trends')
+        plt.xlabel('Date')
+        plt.ylabel('Total Value Locked (USD)')
+        plt.legend()
+        plt.grid(True)
+        plt.show()
+
+    def display_protocol_ranking(self):
+        """Displays the ranking of DeFi protocols based on TVL."""
+        df = self.get_defi_protocols()
+        if df.empty:
+            print("No protocol data found.")
+            return
+
+        df_sorted = df.sort_values(by='tvl', ascending=False)
+        print("DeFi Protocol Rankings based on TVL:")
+        print(df_sorted[['name', 'tvl']].head(10))
+
+# Example Usage
+if __name__ == "__main__":
+    defi_pulse_lab = DeFiPulseLab()
+
+    # Plot TVL Trends
+    defi_pulse_lab.plot_tvl_trends()
+
+    # Display Protocol Ranking
+    defi_pulse_lab.display_protocol_ranking()
+DeFiPulseLab
